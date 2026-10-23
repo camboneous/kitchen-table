@@ -2,7 +2,7 @@
 
 Party games for friends and family. Play pass-and-play on one device, or host a game and have everyone join from their own phone with a 4-letter code.
 
-Games so far: Dots & Boxes, Tic Tac Toe (Classic and Ultimate), Four in a Row, Checkers, Reversi, Mancala.
+Games so far: Rare Words, Dots & Boxes, Tic Tac Toe (Classic and Ultimate), Four in a Row, Checkers, Reversi, Mancala.
 
 No build step. It's plain HTML, CSS, and JavaScript modules, hosted on Netlify, with Firebase Realtime Database holding the live game rooms.
 
@@ -96,6 +96,12 @@ JavaScript modules need a local web server (opening `index.html` directly won't 
 python3 -m http.server 8000
 # then open http://localhost:8000
 ```
+
+## Rare Words
+
+Everyone gets the same seven letters and plays at the same time. Words only you found score 3 points per letter, words two people found score 1 per letter, and words three or more people found score nothing. Using all seven letters adds 10.
+
+The dictionary is `data/words.txt`: about 51,600 English words of 3 to 7 letters, from the public-domain ENABLE word list with offensive words removed. To allow or block a word, add or delete its line. The round letters come from common 7-letter words in `js/games/rarewords-seeds.js`, so there's always at least one seven-letter answer.
 
 ## Adding a game
 

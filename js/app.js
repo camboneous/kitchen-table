@@ -34,6 +34,7 @@ function optionControls(el, game, opts, onChange, readOnly) {
 
 /* ---------- home ---------- */
 const ART = {
+  rare: `<svg viewBox="0 0 120 120">${['R','A','R','E'].map((L,k)=>`<g transform="translate(${14+k*24} ${k%2?46:34}) rotate(${[-8,5,-4,9][k]} 11 11)"><rect width="22" height="24" rx="5" fill="var(--card)" stroke="var(--ink)" stroke-width="2.5"/><text x="11" y="17.5" text-anchor="middle" font-size="15" font-weight="800" font-family="Bricolage Grotesque,system-ui,sans-serif" fill="${['var(--c0)','var(--c1)','var(--c2)','var(--c3)'][k]}">${L}</text></g>`).join('')}<g transform="translate(38 76)">${['W','O','R','D','S'].map((L,k)=>`<g transform="translate(${k*9} 0)"><rect width="8" height="10" rx="2" fill="var(--ink)"/></g>`).join('')}</g><circle cx="98" cy="88" r="10" fill="none" stroke="var(--c3)" stroke-width="3"/><path d="M98 82v6l4 3" stroke="var(--c3)" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`,
   dots: `<svg viewBox="0 0 120 120"><rect x="20" y="20" width="40" height="40" rx="3" fill="var(--c0)" opacity=".25"/><g stroke-width="7" stroke-linecap="round"><line x1="20" y1="20" x2="60" y2="20" stroke="var(--c0)"/><line x1="60" y1="20" x2="60" y2="60" stroke="var(--c1)"/><line x1="20" y1="60" x2="60" y2="60" stroke="var(--c0)"/><line x1="20" y1="20" x2="20" y2="60" stroke="var(--c0)"/><line x1="100" y1="60" x2="100" y2="100" stroke="var(--c1)"/></g><g fill="var(--dot)"><circle cx="20" cy="20" r="6"/><circle cx="60" cy="20" r="6"/><circle cx="100" cy="20" r="6"/><circle cx="20" cy="60" r="6"/><circle cx="60" cy="60" r="6"/><circle cx="100" cy="60" r="6"/><circle cx="20" cy="100" r="6"/><circle cx="60" cy="100" r="6"/><circle cx="100" cy="100" r="6"/></g></svg>`,
   ttt: `<svg viewBox="0 0 120 120" fill="none" stroke-linecap="round"><g stroke="var(--line)" stroke-width="5"><line x1="45" y1="10" x2="45" y2="110"/><line x1="75" y1="10" x2="75" y2="110"/><line x1="10" y1="45" x2="110" y2="45"/><line x1="10" y1="75" x2="110" y2="75"/></g><g stroke="var(--c0)" stroke-width="8"><line x1="17" y1="17" x2="37" y2="37"/><line x1="37" y1="17" x2="17" y2="37"/><line x1="83" y1="83" x2="103" y2="103"/><line x1="103" y1="83" x2="83" y2="103"/></g><circle cx="60" cy="60" r="11" stroke="var(--c1)" stroke-width="8"/><circle cx="93" cy="27" r="11" stroke="var(--c1)" stroke-width="8"/></svg>`,
   four: `<svg viewBox="0 0 120 120"><rect x="8" y="22" width="104" height="90" rx="12" fill="var(--ink)"/><g fill="var(--paper)">${[0,1,2,3].map(r => [0,1,2,3].map(c => `<circle cx="${26 + c * 23}" cy="${40 + r * 21}" r="8"/>`).join('')).join('')}</g><circle cx="26" cy="103" r="8" fill="var(--c1)"/><circle cx="49" cy="103" r="8" fill="var(--c0)"/><circle cx="49" cy="82" r="8" fill="var(--c1)"/><circle cx="72" cy="103" r="8" fill="var(--c1)"/><circle cx="72" cy="82" r="8" fill="var(--c0)"/><circle cx="60" cy="10" r="8" fill="var(--c0)"/></svg>`,
@@ -41,7 +42,7 @@ const ART = {
   reversi: `<svg viewBox="0 0 120 120"><g stroke="var(--line)" stroke-width="2.5">${[0,1,2,3,4].map(k=>`<line x1="${20+k*20}" y1="20" x2="${20+k*20}" y2="100"/><line x1="20" y1="${20+k*20}" x2="100" y2="${20+k*20}"/>`).join('')}</g><circle cx="50" cy="50" r="8" fill="var(--c1)"/><circle cx="70" cy="50" r="8" fill="var(--c0)"/><circle cx="50" cy="70" r="8" fill="var(--c0)"/><circle cx="70" cy="70" r="8" fill="var(--c0)"/><circle cx="90" cy="90" r="8" fill="var(--c0)"/><circle cx="30" cy="30" r="8" fill="var(--c1)"/></svg>`,
   mancala: `<svg viewBox="0 0 120 120"><rect x="6" y="30" width="108" height="60" rx="30" fill="var(--card)" stroke="var(--ink)" stroke-width="3"/><ellipse cx="22" cy="60" rx="9" ry="20" fill="var(--paper)" stroke="var(--line)" stroke-width="2"/><ellipse cx="98" cy="60" rx="9" ry="20" fill="var(--paper)" stroke="var(--line)" stroke-width="2"/>${[0,1,2].map(c=>[0,1].map(r=>`<circle cx="${45+c*15}" cy="${48+r*24}" r="6" fill="var(--paper)" stroke="var(--line)" stroke-width="2"/>`).join('')).join('')}<g fill="var(--c3)"><circle cx="43" cy="47" r="2.4"/><circle cx="47" cy="50" r="2.4"/><circle cx="60" cy="72" r="2.4"/><circle cx="95" cy="56" r="2.4"/><circle cx="100" cy="63" r="2.4"/><circle cx="97" cy="69" r="2.4"/></g></svg>`
 };
-function playersText(g) { return g.min === g.max ? `${g.min} players` : `${g.min}–${g.max} players`; }
+function playersText(g) { return (g.min === g.max ? `${g.min} players` : `${g.min}–${g.max} players`) + (g.simultaneous ? ' · everyone at once' : ''); }
 
 function drawHome() {
   $('cards').replaceChildren(...GAME_LIST.map(g => {
@@ -103,7 +104,8 @@ function drawPlay(view) {
   const st = game.status(state);
   const scores = game.scores ? game.scores(state) : null;
   $('chips').replaceChildren(...players.map((p, i) => {
-    const chip = h('div', { class: 'chip' + (!st.over && state.turn === i ? ' turn' : '') + (p.away ? ' away' : '') },
+    const isTurn = !game.simultaneous && !st.over && state.turn === i;
+    const chip = h('div', { class: 'chip' + (isTurn ? ' turn' : '') + (p.away ? ' away' : '') + (view.done && view.done[i] ? ' done' : '') },
       h('span', { class: 'sw', style: `background:${col(p.color)}` }),
       game.badge ? h('span', { class: 'bd', style: `color:${col(p.color)}` }, game.badge(i)) : null,
       h('span', { class: 'nm' }, p.name + (view.online && i === view.mySeat ? ' (you)' : '')),
@@ -113,7 +115,8 @@ function drawPlay(view) {
   }));
 
   const status = $('status'); status.replaceChildren();
-  if (!st.over) {
+  status.hidden = !!game.simultaneous;
+  if (!st.over && !game.simultaneous) {
     const cur = players[state.turn];
     let text = cur.name + '’s turn';
     if (view.online && view.mySeat === state.turn) text = 'Your turn';
@@ -124,8 +127,13 @@ function drawPlay(view) {
     if (extra) status.append(h('small', {}, extra));
   }
 
-  const canMove = !st.over && !view.busy && (view.mySeat === -1 || view.mySeat === state.turn);
-  game.render($('board'), state, { players, canMove, onMove: view.onMove, mySeat: view.mySeat });
+  if (game.simultaneous) {
+    if (view.handoff) view.handoff($('board'));
+    else game.render($('board'), state, { players, mySeat: view.mySeat, ...view.sim });
+  } else {
+    const canMove = !st.over && !view.busy && (view.mySeat === -1 || view.mySeat === state.turn);
+    game.render($('board'), state, { players, canMove, onMove: view.onMove, mySeat: view.mySeat });
+  }
 
   if (st.over) showOver(view, st, scores); else $('over').classList.remove('on');
 }
@@ -154,21 +162,56 @@ $('local-start').onclick = () => {
   const g = setup.game;
   const players = Array.from({ length: setup.n }, (_, i) => ({ name: clean(setup.names[i]) || DEFAULT_NAMES[i], color: i }));
   local = { game: g, players, opts: { ...setup.opts }, round: 0 };
-  local.state = g.init(players.length, local.opts, 0);
+  local.state = g.init(players.length, local.opts, 0, Date.now());
+  resetLocalSim();
   $('board').removeAttribute('data-last');
   $('play-tag').textContent = g.name;
   $('play-leave').onclick = () => { local = null; drawHome(); show('home'); };
   show('play'); drawLocal();
 };
+// Everyone-at-once games on one device: each player gets a private turn, then everyone sees the reveal.
+function resetLocalSim() { local.sim = { active: 0, entries: [], endsAt: null, token: 0 }; }
 function drawLocal() {
-  drawPlay({
-    game: local.game, state: local.state, players: local.players, mySeat: -1, online: false,
-    onMove: mv => { const n = local.game.move(local.state, mv, local.state.turn); if (n) { local.state = n; drawLocal(); } },
+  const g = local.game, sim = local.sim;
+  const view = {
+    game: g, state: local.state, players: local.players, mySeat: -1, online: false,
+    onMove: mv => { const n = g.move(local.state, mv, local.state.turn); if (n) { local.state = n; drawLocal(); } },
     actions: [
-      { label: 'Play again', fn: () => { local.round++; local.state = local.game.init(local.players.length, local.opts, local.round); $('board').removeAttribute('data-last'); drawLocal(); } },
+      { label: 'Play again', fn: () => { local.round++; local.state = g.init(local.players.length, local.opts, local.round, Date.now()); if (g.simultaneous) resetLocalSim(); $('board').removeAttribute('data-last'); drawLocal(); } },
       { label: 'Change setup', ghost: true, fn: () => { local = null; openSetup(setup.game.id); } }
     ]
-  });
+  };
+  if (g.simultaneous) {
+    const st = local.state;
+    view.done = local.players.map((_, i) => st.phase === 'play' && i < sim.active);
+    if (st.phase === 'play' && sim.endsAt == null) {
+      const p = local.players[sim.active];
+      view.handoff = el => el.replaceChildren(h('div', { class: 'handoff' },
+        h('p', { class: 'sub' }, g.roundLabel ? g.roundLabel(st) : ''),
+        h('div', { class: 'handoff-name', style: `color:${col(p.color)}` }, `Pass to ${p.name}`),
+        h('p', { class: 'sub' }, local.players.length > 1 ? 'Everyone else, no peeking.' : ''),
+        h('button', { class: 'btn', onclick: () => { sim.endsAt = Date.now() + g.turnMs(st); drawLocal(); } }, 'I’m ready')));
+    } else {
+      const token = sim.token;
+      view.mySeat = st.phase === 'play' ? sim.active : -1;
+      view.sim = {
+        local: true, now: () => Date.now(), endsAt: sim.endsAt,
+        myEntry: sim.entries[sim.active] || null,
+        setEntry: e => { if (sim.token === token) sim.entries[sim.active] = e; },
+        finishRound: () => {
+          if (sim.token !== token || local.state.phase !== 'play') return;
+          sim.token++; sim.active++; sim.endsAt = null;
+          if (sim.active >= local.players.length) {
+            local.state = g.collect(local.state, local.players.map((_, i) => sim.entries[i] || null), Date.now());
+            resetLocalSim();
+          }
+          drawLocal();
+        },
+        nextRound: () => { if (local.state.phase !== 'reveal') return; local.state = g.next(local.state, Date.now()); resetLocalSim(); drawLocal(); }
+      };
+    }
+  }
+  drawPlay(view);
 }
 
 /* ---------- online: host and join ---------- */
@@ -300,7 +343,7 @@ function drawOnlinePlay(d, playersAll) {
   const players = seats.map(id => ({ name: byId[id]?.name || 'Player', color: byId[id]?.color ?? 0, away: !byId[id]?.here }));
   const mySeat = seats.indexOf(net.pid);
   const rev = d.rev;
-  drawPlay({
+  const view = {
     game, state, players, mySeat: mySeat >= 0 ? mySeat : -2, online: true, busy: room.busy,
     onMove: async mv => {
       if (room.busy) return;
@@ -313,7 +356,25 @@ function drawOnlinePlay(d, playersAll) {
       { label: 'Back to lobby', ghost: true, fn: () => net.toLobby(room.code) },
       { label: 'Leave game', ghost: true, fn: leaveRoom }
     ]
-  });
+  };
+  if (game.simultaneous) {
+    // Each player's words for this round live in entries/r<round>/<pid> until the round is scored.
+    const bucket = (d.entries || {})['r' + state.round] || {};
+    const entries = seats.map(id => { try { return bucket[id] ? JSON.parse(bucket[id]) : null; } catch (e) { return null; } });
+    view.done = entries.map(e => !!(e && e.done) && state.phase === 'play');
+    const code = room.code, round = state.round;
+    view.sim = {
+      local: false, now: net.now, endsAt: state.endsAt,
+      myEntry: mySeat >= 0 ? entries[mySeat] : null,
+      setEntry: e => net.setEntry(code, round, e).catch(() => toast('Couldn’t save that word. Check your connection.')),
+      finishRound: () => net.finishRound(code, round).catch(() => {}),
+      nextRound: () => net.nextRound(code, rev).catch(() => {})
+    };
+    // Everyone still here pressed Done: wrap the round up early.
+    const herePlayers = seats.map((id, i) => ({ i, here: !!byId[id]?.here }));
+    if (state.phase === 'play' && herePlayers.every(p => !p.here || view.done[p.i]) && herePlayers.some(p => p.here)) view.sim.finishRound();
+  }
+  drawPlay(view);
 }
 
 /* ---------- start ---------- */

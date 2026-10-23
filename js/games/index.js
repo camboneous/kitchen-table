@@ -19,6 +19,18 @@
     note(state)   -> extra hint under the turn line
 
   The same module runs pass-and-play and online games, so every game gets both for free.
+
+  Everyone-at-once games (like Rare Words) set simultaneous: true and add:
+    init(n, opts, round, now)       now is a shared clock time, for round timers
+    collect(state, entries, now)    entries[seat] = that player's private answers ({..., done}) or null;
+                                    returns the state with the round scored
+    next(state, now)                start the next round, or finish the game
+    turnMs(state)                   how long one player's turn lasts (used for pass-and-play)
+    roundLabel(state)               e.g. 'Round 2 of 3'
+  and render gets ctx = { players, mySeat, local, now(), endsAt, myEntry, setEntry(entry),
+                          finishRound(), nextRound() }.
+  Online, answers are saved per player and only combined when the round is scored. In
+  pass-and-play, the app hands the device to each player in turn, then shows the results.
 */
 import dots from './dots.js';
 import ttt from './tictactoe.js';
@@ -26,8 +38,9 @@ import four from './fourrow.js';
 import checkers from './checkers.js';
 import reversi from './reversi.js';
 import mancala from './mancala.js';
+import rare from './rarewords.js';
 
-export const GAME_LIST = [dots, ttt, four, checkers, reversi, mancala];
+export const GAME_LIST = [rare, dots, ttt, four, checkers, reversi, mancala];
 export const GAMES = Object.fromEntries(GAME_LIST.map(g => [g.id, g]));
 
 export function defaultOpts(game) {

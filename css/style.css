@@ -241,6 +241,57 @@ input[type=text]:focus{outline:none;border-color:var(--ink)}
   .store{min-height:56px;border-radius:999px;margin:0 12%}
 }
 
+/* everyone-at-once games */
+.chip.done::after{content:"✓";font-weight:800;color:var(--c)}
+.handoff{background:var(--card);border:2px solid var(--ink);border-radius:16px;padding:28px 20px;text-align:center;width:min(94vw,420px);box-shadow:4px 4px 0 var(--ink);display:grid;gap:12px;justify-items:center;margin-top:8px}
+.handoff-name{font-size:clamp(2rem,9vw,2.8rem);font-weight:800;letter-spacing:-.02em;line-height:1.05}
+
+/* rare words */
+.rw{width:min(94vw,480px);display:grid;gap:12px;margin-top:4px}
+.rw-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.rw-round{font-weight:800;color:var(--muted)}
+.rw-timer{font-weight:800;font-size:1.6rem;font-variant-numeric:tabular-nums}
+.rw-timer.urgent{color:var(--danger);animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.55}}
+.rw-word{min-height:3.2rem;display:grid;place-items:center;font-size:clamp(1.8rem,8vw,2.4rem);font-weight:800;letter-spacing:.12em;
+  border-bottom:3px solid var(--ink);padding-bottom:4px}
+.rw-word.empty{font-size:1rem;letter-spacing:0;font-weight:600;color:var(--muted)}
+.rw-word.shake{animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.rw-msg{min-height:1.3em;text-align:center;font-weight:600;color:var(--muted)}
+.rw-msg.good{color:var(--c2)}
+.rw-msg.bad{color:var(--danger)}
+.rw-tiles{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.tile{aspect-ratio:1;border-radius:12px;border:2px solid var(--ink);background:var(--card);font-size:clamp(1.3rem,6vw,1.8rem);font-weight:800;
+  cursor:pointer;box-shadow:0 3px 0 var(--ink);transition:transform .06s,box-shadow .06s,opacity .1s;padding:0}
+.tile:active:not(:disabled){transform:translateY(3px);box-shadow:none}
+.tile:disabled{opacity:.3;cursor:default;box-shadow:none;transform:translateY(3px)}
+.rw-ctrl{display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:8px}
+.rw-ctrl .btn{width:100%}
+.rw-watch{text-align:center}
+.rw-found{background:var(--card);border:2px solid var(--line);border-radius:12px;padding:10px 12px;min-height:84px}
+.rw-found-head{font-weight:800;margin-bottom:8px}
+.rw-found-head span{color:var(--muted);font-weight:600}
+.rw-list{display:flex;flex-wrap:wrap;gap:6px}
+.rw-chip{background:var(--paper);border:1.5px solid var(--line);border-radius:8px;padding:3px 8px;font-weight:700;letter-spacing:.04em;animation:pop .2s ease-out}
+.rw-chip.seven{border-color:var(--c3);background:color-mix(in srgb,var(--c3) 22%,var(--paper))}
+.rw-letters{display:flex;gap:4px;justify-content:center;margin:0}
+.rw-letters span{width:2rem;height:2rem;display:grid;place-items:center;border:2px solid var(--ink);border-radius:8px;font-weight:800;background:var(--card)}
+.rw-gains{display:flex;flex-wrap:wrap;gap:8px}
+.rw-gain{display:flex;align-items:center;gap:6px;background:var(--card);border:2px solid var(--c);border-radius:999px;padding:6px 12px;font-weight:600}
+.rw-gain b{font-variant-numeric:tabular-nums}
+.rw-words{list-style:none;margin:0;padding:0;background:var(--card);border:2px solid var(--ink);border-radius:14px;overflow:hidden}
+.rw-row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:9px 12px;border-top:1.5px dashed var(--line);
+  opacity:0;animation:rowin .3s ease-out forwards}
+.rw-row:first-child{border-top:0}
+@keyframes rowin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.rw-row.solo{background:color-mix(in srgb,var(--c3) 12%,var(--card))}
+.rw-row.zero{color:var(--muted)}
+.rw-w{font-weight:800;letter-spacing:.06em}
+.rw-by{display:flex;flex-wrap:wrap;gap:4px 8px;font-size:.9rem;font-weight:600;min-width:0}
+.rw-pts{font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.rw-seed b{color:var(--ink);letter-spacing:.06em}
+
 /* game over */
 .overlay{
   position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;z-index:20;
@@ -255,6 +306,6 @@ input[type=text]:focus{outline:none;border-color:var(--ink)}
 .ov-actions{display:grid;gap:10px;margin-top:16px}
 
 @media (prefers-reduced-motion: reduce){
-  .fresh,.pop .mark,.disc.drop,.disc.place,.disc.flip{animation:none!important;stroke-dashoffset:0}
+  .fresh,.pop .mark,.disc.drop,.disc.place,.disc.flip,.rw-row,.rw-chip,.rw-word.shake,.rw-timer.urgent{animation:none!important;stroke-dashoffset:0;opacity:1}
   .choice,.card{transition:none}
 }

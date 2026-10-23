@@ -38,8 +38,12 @@ async function load() {
   const dbMod = await import(FB + 'firebase-database.js');
   const app = appMod.initializeApp(firebaseConfig);
   fb = { ...dbMod, db: dbMod.getDatabase(app) };
+  // Firebase tells us how far this device's clock is from the server's, so round timers match on every phone.
+  dbMod.onValue(dbMod.ref(fb.db, '.info/serverTimeOffset'), s => { clockOffset = s.val() || 0; });
   return fb;
 }
+let clockOffset = 0;
+export const now = () => Date.now() + clockOffset;
 
 const roomPath = code => 'rooms/' + code;
 const STALE = 24 * 60 * 60 * 1000;
@@ -127,7 +131,8 @@ export const start = code => tx(code, room => {
   if (seats.length < game.min) return;
   room.seats = JSON.stringify(seats);
   room.round = 0;
-  room.state = JSON.stringify(game.init(seats.length, optsFor(game, room.opts), 0));
+  room.state = JSON.stringify(game.init(seats.length, optsFor(game, room.opts), 0, now()));
+  room.entries = null;
   room.phase = 'play'; room.rev = (room.rev || 0) + 1;
   return room;
 });
@@ -151,14 +156,15 @@ export const rematch = (code, rev) => tx(code, room => {
   const game = GAMES[room.game];
   const seats = JSON.parse(room.seats);
   room.round = (room.round || 0) + 1;
-  room.state = JSON.stringify(game.init(seats.length, optsFor(game, room.opts), room.round));
+  room.state = JSON.stringify(game.init(seats.length, optsFor(game, room.opts), room.round, now()));
+  room.entries = null;
   room.rev += 1;
   return room;
 });
 
 export const toLobby = code => tx(code, room => {
   if (room.phase !== 'play') return;
-  room.phase = 'lobby'; room.state = null; room.seats = null; room.rev = (room.rev || 0) + 1;
+  room.phase = 'lobby'; room.state = null; room.seats = null; room.entries = null; room.rev = (room.rev || 0) + 1;
   return room;
 });
 
@@ -169,3 +175,40 @@ export async function leave(code) {
     return room;
   }).catch(() => {});
 }
+
+/* ---------- everyone-at-once games ---------- */
+
+// Save my answers for this round (only the scoring step reads other people's).
+export async function setEntry(code, round, entry) {
+  const { db, ref, set } = await load();
+  await set(ref(db, `${roomPath(code)}/entries/r${round}/${pid}`), JSON.stringify(entry));
+}
+
+// Score the round once time is up or everyone still here is done. Safe for every phone to call; only one wins.
+export const finishRound = (code, round) => tx(code, room => {
+  if (room.phase !== 'play') return;
+  const game = GAMES[room.game];
+  if (!game.simultaneous) return;
+  const st = JSON.parse(room.state);
+  if (st.phase !== 'play' || st.round !== round) return;
+  const seats = JSON.parse(room.seats);
+  const bucket = (room.entries || {})['r' + round] || {};
+  const entries = seats.map(id => { try { return bucket[id] ? JSON.parse(bucket[id]) : null; } catch (e) { return null; } });
+  const online = room.online || {};
+  const allDone = seats.every((id, i) => !online[id] || (entries[i] && entries[i].done));
+  if (now() < st.endsAt - 1500 && !allDone) return;
+  room.state = JSON.stringify(game.collect(st, entries, now()));
+  room.entries = null;
+  room.rev = (room.rev || 0) + 1;
+  return room;
+});
+
+export const nextRound = (code, rev) => tx(code, room => {
+  if (room.phase !== 'play' || room.rev !== rev) return;
+  const game = GAMES[room.game];
+  const st = JSON.parse(room.state);
+  if (st.phase !== 'reveal') return;
+  room.state = JSON.stringify(game.next(st, now()));
+  room.rev += 1;
+  return room;
+});
