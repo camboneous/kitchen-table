@@ -10,7 +10,9 @@
     move(state, move, seat)-> new state, or null if the move is not allowed.
                               Must be pure: never change `state` in place.
     status(state)          -> { over: false } or { over: true, winners: [seats], draw? }
-    render(el, state, ctx) -> draw into el. ctx = { players:[{name,color}], canMove, onMove(move) }
+    render(el, state, ctx) -> draw into el. ctx = { players:[{name,color}], canMove, onMove(move),
+                              mySeat } where mySeat is -1 for pass-and-play, -2 when watching,
+                              or the viewer's seat online (use it to flip the board).
   Optional:
     scores(state) -> [number per seat]     shown on the player chips
     badge(seat)   -> short text like 'X'   shown on the player chips
@@ -21,8 +23,11 @@
 import dots from './dots.js';
 import ttt from './tictactoe.js';
 import four from './fourrow.js';
+import checkers from './checkers.js';
+import reversi from './reversi.js';
+import mancala from './mancala.js';
 
-export const GAME_LIST = [dots, ttt, four];
+export const GAME_LIST = [dots, ttt, four, checkers, reversi, mancala];
 export const GAMES = Object.fromEntries(GAME_LIST.map(g => [g.id, g]));
 
 export function defaultOpts(game) {

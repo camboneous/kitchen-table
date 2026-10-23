@@ -183,6 +183,64 @@ input[type=text]:focus{outline:none;border-color:var(--ink)}
 .disc.drop{animation:drop .3s cubic-bezier(.5,0,.75,0)}
 @keyframes drop{from{transform:translateY(calc(var(--d) * -112%))}}
 
+/* checkers */
+.ck{display:grid;grid-template-columns:repeat(8,1fr);width:min(94vw,520px);aspect-ratio:1;border:3px solid var(--ink);border-radius:10px;overflow:hidden}
+.ck .sq{aspect-ratio:1;display:grid;place-items:center;border:0;padding:0;position:relative}
+.ck .light{background:var(--card)}
+.ck .dark{background:color-mix(in srgb,var(--ink) 78%,var(--paper));cursor:default}
+.ck .dark.last{background:color-mix(in srgb,var(--cur) 30%,color-mix(in srgb,var(--ink) 78%,var(--paper)))}
+.ck .dark.movable{cursor:pointer}
+.ck .piece{width:76%;height:76%;border-radius:50%;display:grid;place-items:center;color:var(--paper);
+  box-shadow:inset 0 -4px 0 rgba(0,0,0,.25),0 2px 0 rgba(0,0,0,.3);transition:transform .12s}
+.ck .piece svg{width:52%;height:52%}
+.ck .movable .piece{outline:2px dashed var(--paper);outline-offset:2px}
+.ck .sel .piece{transform:scale(1.1);outline:3px solid var(--paper);outline-offset:2px}
+.ck .target{cursor:pointer}
+.ck .target::after{content:"";width:32%;height:32%;border-radius:50%;background:var(--cur);opacity:.9}
+
+/* reversi */
+.rv{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;padding:6px;width:min(94vw,520px);aspect-ratio:1;background:var(--ink);border-radius:12px}
+.rvsq{aspect-ratio:1;border:0;padding:0;background:color-mix(in srgb,var(--c2) 22%,var(--card));border-radius:4px;display:grid;place-items:center;position:relative}
+.rvsq.hint{cursor:pointer}
+.rvsq.hint::after{content:"";width:26%;height:26%;border-radius:50%;background:var(--cur);opacity:.55}
+.rvsq.hint:hover::after{opacity:1;width:60%;height:60%}
+.rvsq .disc{position:static;width:80%;height:80%;border-radius:50%;box-shadow:inset 0 -3px 0 rgba(0,0,0,.22)}
+.rvsq .disc.last{box-shadow:inset 0 -3px 0 rgba(0,0,0,.22),0 0 0 3px var(--paper)}
+.disc.place{animation:pop .2s ease-out}
+.disc.flip{animation:flip .35s ease-in-out}
+@keyframes flip{0%{transform:scaleX(1)}50%{transform:scaleX(0)}100%{transform:scaleX(1)}}
+
+/* mancala */
+.mc{display:grid;grid-template-columns:minmax(44px,.9fr) 6fr minmax(44px,.9fr);grid-template-rows:1fr 1fr;
+  grid-template-areas:"ls top rs" "ls bot rs";gap:8px;padding:10px;width:min(96vw,620px);
+  background:var(--card);border:3px solid var(--ink);border-radius:999px}
+.mc .row{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.mc .row.top{grid-area:top}
+.mc .row.bot{grid-area:bot}
+.pit,.store{position:relative;border-radius:50%;background:var(--paper);border:2px solid var(--line);
+  display:grid;place-items:center;padding:0;color:var(--ink)}
+.pit{aspect-ratio:1;cursor:default}
+.pit:not(:disabled){cursor:pointer;border-color:var(--own)}
+.pit:not(:disabled):hover{box-shadow:0 0 0 3px color-mix(in srgb,var(--own) 40%,transparent)}
+.pit.last{border-style:dashed;border-color:var(--ink)}
+.pit.end,.store.end{background:color-mix(in srgb,var(--cur) 18%,var(--paper))}
+.store{border-radius:999px;border-color:var(--own);align-content:center;gap:2px;min-height:100%}
+.store .who{font-size:.7rem;color:var(--muted);max-width:7ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cnt{position:relative;font-weight:800;font-size:clamp(1rem,3.6vw,1.2rem);z-index:1;
+  text-shadow:0 0 3px var(--paper),0 0 3px var(--paper)}
+.store .cnt{font-size:clamp(1.1rem,5vw,1.6rem)}
+.peb{position:absolute;inset:12%}
+.peb i{position:absolute;width:13%;height:13%;border-radius:50%;background:var(--c3);transform:translate(-50%,-50%);opacity:.8}
+
+@media (max-width:560px){
+  /* Mancala turns on its side on phones so the pits are big enough to tap.
+     Same board rotated a quarter turn: left store on top, right store on the bottom. */
+  .mc{grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr auto;grid-template-areas:"ls ls" "bot top" "rs rs";
+    width:min(52vw,190px);border-radius:90px;padding:14px 12px;gap:8px}
+  .mc .row{grid-template-columns:1fr;grid-template-rows:repeat(6,1fr);gap:6px}
+  .store{min-height:56px;border-radius:999px;margin:0 12%}
+}
+
 /* game over */
 .overlay{
   position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;z-index:20;
@@ -197,6 +255,6 @@ input[type=text]:focus{outline:none;border-color:var(--ink)}
 .ov-actions{display:grid;gap:10px;margin-top:16px}
 
 @media (prefers-reduced-motion: reduce){
-  .fresh,.pop .mark,.disc.drop{animation:none!important;stroke-dashoffset:0}
+  .fresh,.pop .mark,.disc.drop,.disc.place,.disc.flip{animation:none!important;stroke-dashoffset:0}
   .choice,.card{transition:none}
 }

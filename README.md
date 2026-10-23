@@ -2,7 +2,7 @@
 
 Party games for friends and family. Play pass-and-play on one device, or host a game and have everyone join from their own phone with a 4-letter code.
 
-Games so far: Dots & Boxes, Tic Tac Toe (Classic and Ultimate), Four in a Row.
+Games so far: Dots & Boxes, Tic Tac Toe (Classic and Ultimate), Four in a Row, Checkers, Reversi, Mancala.
 
 No build step. It's plain HTML, CSS, and JavaScript modules, hosted on Netlify, with Firebase Realtime Database holding the live game rooms.
 
