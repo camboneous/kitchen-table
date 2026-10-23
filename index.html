@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#EFF4EA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#10202B" media="(prefers-color-scheme: dark)">
+<title>Kitchen Table</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎲</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main>
+
+  <section class="screen on" id="s-home">
+    <header class="masthead">
+      <h1 id="app-name">Kitchen Table</h1>
+      <p class="sub">Games for friends and family. Play on one phone, or join from your own with a code.</p>
+    </header>
+    <div class="banner rejoin" id="rejoin" hidden>
+      <span id="rejoin-text"></span>
+      <button class="btn small" id="rejoin-go">Rejoin</button>
+    </div>
+    <button class="choice join-cta" id="home-join">
+      <span class="ic" aria-hidden="true">#</span>
+      <span><b>Join with a code</b><span>Someone’s already hosting? Enter their 4 letters.</span></span>
+    </button>
+    <h2 class="section">Pick a game</h2>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <section class="screen" id="s-setup">
+    <button class="back" data-home>‹ Games</button>
+    <h2 id="setup-title"></h2>
+    <p class="sub" id="setup-blurb"></p>
+    <div class="seg modes" id="setup-mode" role="group" aria-label="How to play"></div>
+    <div class="panel" id="setup-local">
+      <label>Players</label>
+      <div class="seg" id="local-count"></div>
+      <label>Names</label>
+      <div id="local-names"></div>
+      <div id="local-opts"></div>
+      <button class="btn wide" id="local-start">Start game</button>
+    </div>
+    <div class="panel" id="setup-online" hidden>
+      <label for="host-name">Your name</label>
+      <input type="text" id="host-name" maxlength="14" autocomplete="nickname" placeholder="Your name">
+      <p class="small">You’ll get a code to share. You can switch games later from the lobby.</p>
+      <button class="btn wide" id="host-go">Create game</button>
+      <p class="note" id="host-note"></p>
+    </div>
+  </section>
+
+  <section class="screen" id="s-join">
+    <button class="back" data-home>‹ Games</button>
+    <h2>Join a game</h2>
+    <div class="panel">
+      <label for="join-code">Game code</label>
+      <input type="text" id="join-code" class="code-in" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD">
+      <label for="join-name">Your name</label>
+      <input type="text" id="join-name" maxlength="14" autocomplete="nickname" placeholder="Your name">
+      <button class="btn wide" id="join-go">Join game</button>
+      <p class="note" id="join-note"></p>
+    </div>
+  </section>
+
+  <section class="screen" id="s-lobby">
+    <button class="back" data-leave>‹ Leave</button>
+    <p class="sub">Game code</p>
+    <div class="code-row">
+      <div class="bigcode" id="lobby-code">····</div>
+      <button class="btn ghost small" id="lobby-share">Share link</button>
+    </div>
+    <p class="sub" id="lobby-hint"></p>
+    <div class="panel">
+      <h3>Players</h3>
+      <ul class="roster" id="lobby-roster"></ul>
+    </div>
+    <div class="panel">
+      <h3 id="lobby-game-title"></h3>
+      <div id="lobby-ctl">
+        <div class="seg" id="lobby-games"></div>
+        <div id="lobby-opts"></div>
+        <button class="btn wide" id="lobby-start">Start game</button>
+      </div>
+      <p class="small" id="lobby-msg"></p>
+    </div>
+  </section>
+
+  <section class="screen" id="s-play">
+    <div class="topbar">
+      <button class="back" id="play-leave">‹ Leave</button>
+      <span class="tag" id="play-tag"></span>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="status" id="status"></div>
+    <div class="board" id="board"></div>
+  </section>
+
+</main>
+
+<div class="overlay" id="over" role="dialog" aria-modal="true" aria-labelledby="result">
+  <div class="panel">
+    <p class="sub">Game over</p>
+    <div class="result" id="result"></div>
+    <ul class="final" id="final"></ul>
+    <div class="ov-actions" id="ov-actions"></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
