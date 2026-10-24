@@ -103,6 +103,10 @@ Everyone gets the same seven letters and plays at the same time. Words only you 
 
 The dictionary is `data/words.txt`: about 51,600 English words of 3 to 7 letters, from the public-domain ENABLE word list with offensive words removed. To allow or block a word, add or delete its line. The round letters come from common 7-letter words in `js/games/rarewords-seeds.js`, so there's always at least one seven-letter answer.
 
+## Chat and reactions
+
+Online rooms have a chat button and a reactions button in the bottom corner. Chat carries across every game in the room and disappears when the room expires (only the latest 60 messages are kept). Quick reactions float up on everyone's screen. Swear words are masked using the list in `js/badwords.js` (add or remove entries as you like), and chat pauses during Rare Words rounds so nobody gives away a word. Pass-and-play games don't show chat, since everyone's on the same device.
+
 ## Adding a game
 
 Each game is one file in `js/games/`. The comment at the top of `js/games/index.js` describes what a game module provides: setup, legal moves, win check, and how to draw it. Create the file, add it to the list in `index.js`, and optionally add card art in the `ART` object in `js/app.js`. Pass-and-play and online both work automatically.

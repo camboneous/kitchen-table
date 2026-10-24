@@ -1,6 +1,7 @@
 import { GAMES, GAME_LIST, defaultOpts, optsFor } from './games/index.js';
 import { h, col } from './games/util.js';
 import * as net from './net.js';
+import * as chat from './chat.js';
 
 const $ = id => document.getElementById(id);
 const clean = s => String(s || '').replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u206f]/g, '').trim().slice(0, 14);
@@ -256,10 +257,21 @@ async function enterRoom(code) {
   net.ls.set('kt-room', code);
   history.replaceState(null, '', '#' + code);
   $('lobby-code').textContent = code;
-  try { room.unwatch = await net.watch(code, data => { if (room && room.code === code) { room.data = data; drawRoom(); } }); }
+  chat.attach(code);
+  try {
+    room.unwatch = await net.watch(code, data => {
+      if (!room || room.code !== code) return;
+      room.data = data;
+      chat.update(data);
+      // Chat and reactions don't change the game, so skip redrawing the board for them.
+      const sig = data ? JSON.stringify({ ...data, chat: null, react: null }) : '';
+      if (sig !== room.sig || !data) { room.sig = sig; drawRoom(); }
+    });
+  }
   catch (e) { toast('Couldn’t connect to the game.'); }
 }
 function leaveRoomQuietly() {
+  chat.detach();
   if (!room) return;
   try { room.unwatch && room.unwatch(); } catch (e) {}
   room = null;

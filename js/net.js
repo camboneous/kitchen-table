@@ -212,3 +212,26 @@ export const nextRound = (code, rev) => tx(code, room => {
   room.rev += 1;
   return room;
 });
+
+/* ---------- chat and reactions ---------- */
+// Messages live at rooms/<CODE>/chat, so they go away with the room. Only the newest are kept.
+const CHAT_KEEP = 60;
+
+export async function sendChat(code, msg) {
+  const { db, ref, push, get, update } = await load();
+  const chatRef = ref(db, `${roomPath(code)}/chat`);
+  await push(chatRef, { ...msg, p: pid, t: now() });
+  const snap = await get(chatRef);
+  const keys = Object.keys(snap.val() || {}).sort();
+  if (keys.length > CHAT_KEEP + 15) {
+    const trim = {};
+    for (const k of keys.slice(0, keys.length - CHAT_KEEP)) trim[k] = null;
+    await update(chatRef, trim);
+  }
+}
+
+// One slot per player; a newer reaction replaces the last one.
+export async function sendReaction(code, e) {
+  const { db, ref, set } = await load();
+  await set(ref(db, `${roomPath(code)}/react/${pid}`), { e, t: now() });
+}
