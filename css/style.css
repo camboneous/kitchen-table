@@ -368,6 +368,40 @@ button.pcard:disabled{cursor:default}
 .eu-alone input{width:18px;height:18px;accent-color:var(--ink)}
 .eu-hint{text-align:center;font-weight:700}
 
+/* five dice */
+.dicegame{width:min(96vw,560px);display:grid;gap:12px}
+.dice-row{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.die{position:relative;aspect-ratio:1;border-radius:16%;border:2.5px solid var(--ink);background:var(--card);padding:14%;cursor:pointer;box-shadow:0 4px 0 var(--ink);transition:transform .1s,box-shadow .1s}
+.die:disabled{cursor:default}
+.die.held{background:var(--ink);transform:translateY(4px);box-shadow:none}
+.die.held .pips i.on{background:var(--paper)}
+.die.blank .pips{opacity:.15}
+.die.rolled{animation:tumble .45s ease-out}
+@keyframes tumble{0%{transform:rotate(-25deg) scale(.7);opacity:.4}60%{transform:rotate(10deg) scale(1.06)}100%{transform:none}}
+.pips{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);width:100%;height:100%;gap:6%}
+.pips i{border-radius:50%;display:block}
+.pips i.on{background:var(--ink)}
+.held-tag{position:absolute;left:50%;bottom:-22px;transform:translateX(-50%);font-size:.65rem;font-weight:800;letter-spacing:.08em;color:var(--ink)}
+.roll-btn{margin-top:14px}
+.dice-msg{text-align:center;color:var(--muted);font-weight:600;min-height:1.4em}
+.sheet-wrap{overflow-x:auto;border:2px solid var(--ink);border-radius:14px;background:var(--card)}
+.sheet{width:100%;border-collapse:collapse;font-size:.95rem}
+.sheet th,.sheet td{padding:6px 8px;border-top:1px solid var(--line);text-align:center}
+.sheet thead th{border-top:0;font-weight:800;max-width:7ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sheet tbody th{text-align:left;font-weight:600;white-space:nowrap}
+.sheet tbody th,.sheet thead th:first-child{position:sticky;left:0;z-index:1;background:var(--card);box-shadow:1px 0 0 var(--line)}
+.sheet tbody th small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}
+.sheet td{font-variant-numeric:tabular-nums;font-weight:700;min-width:40px}
+.sheet .cur{background:color-mix(in srgb,var(--c3) 12%,transparent)}
+.sheet td.preview{color:var(--muted);font-weight:500}
+.sheet .subrow th,.sheet .subrow td{color:var(--muted);font-weight:600;font-size:.82rem}
+.sheet .totrow th,.sheet .totrow td{border-top:2px solid var(--ink);font-weight:800;font-size:1.05rem}
+.sheet.many{font-size:.85rem}
+.sheet.many th,.sheet.many td{padding:5px 4px}
+.pick{width:100%;border:2px solid var(--c3);background:var(--paper);border-radius:8px;padding:3px 0;font-weight:800;cursor:pointer;font-variant-numeric:tabular-nums}
+.pick:hover{background:color-mix(in srgb,var(--c3) 25%,var(--paper))}
+.pick.zero{border-color:var(--line);color:var(--muted);font-weight:600}
+
 /* chat and reactions */
 body.in-room main{padding-bottom:96px}
 .chat-fab{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;gap:10px;z-index:25}
@@ -438,6 +472,6 @@ body.in-room main{padding-bottom:96px}
 .ov-actions{display:grid;gap:10px;margin-top:16px}
 
 @media (prefers-reduced-motion: reduce){
-  .fresh,.pop .mark,.disc.drop,.disc.place,.disc.flip,.rw-row,.rw-chip,.rw-word.shake,.rw-timer.urgent,.bubble{animation:none!important;stroke-dashoffset:0;opacity:1}
+  .fresh,.pop .mark,.disc.drop,.disc.place,.disc.flip,.rw-row,.rw-chip,.rw-word.shake,.rw-timer.urgent,.bubble,.die.rolled{animation:none!important;stroke-dashoffset:0;opacity:1}
   .choice,.card{transition:none}
 }

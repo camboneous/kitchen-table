@@ -45,8 +45,9 @@ import mancala from './mancala.js';
 import rare from './rarewords.js';
 import euchre from './euchre.js';
 import eights from './crazyeights.js';
+import dice from './fivedice.js';
 
-export const GAME_LIST = [rare, euchre, eights, dots, ttt, four, checkers, reversi, mancala];
+export const GAME_LIST = [rare, euchre, eights, dice, dots, ttt, four, checkers, reversi, mancala];
 export const GAMES = Object.fromEntries(GAME_LIST.map(g => [g.id, g]));
 
 export function defaultOpts(game) {
