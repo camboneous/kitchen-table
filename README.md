@@ -2,7 +2,7 @@
 
 Party games for friends and family. Play pass-and-play on one device, or host a game and have everyone join from their own phone with a 4-letter code.
 
-Games so far: Rare Words, Dots & Boxes, Tic Tac Toe (Classic and Ultimate), Four in a Row, Checkers, Reversi, Mancala.
+Games so far: Rare Words, Euchre, Crazy Eights, Dots & Boxes, Tic Tac Toe (Classic and Ultimate), Four in a Row, Checkers, Reversi, Mancala.
 
 No build step. It's plain HTML, CSS, and JavaScript modules, hosted on Netlify, with Firebase Realtime Database holding the live game rooms.
 
@@ -102,6 +102,12 @@ python3 -m http.server 8000
 Everyone gets the same seven letters and plays at the same time. Words only you found score 3 points per letter, words two people found score 1 per letter, and words three or more people found score nothing. Using all seven letters adds 10.
 
 The dictionary is `data/words.txt`: about 51,600 English words of 3 to 7 letters, from the public-domain ENABLE word list with offensive words removed. To allow or block a word, add or delete its line. The round letters come from common 7-letter words in `js/games/rarewords-seeds.js`, so there's always at least one seven-letter answer.
+
+## Card games
+
+Euchre (4 players, American rules) and Crazy Eights (2 to 6) share a card kit in `js/games/cards.js`. Online, each phone shows only that player's hand. In pass-and-play, a "Pass to …" screen appears before each turn so nobody sees another hand. Euchre's lobby options: points to win (5, 7, 10, 11), whether the dealer's partner can order it up and still play together or must go alone, stick the dealer, and teams by join order or random.
+
+Hands are hidden by the app, not locked down in the database, so a determined peeker with browser developer tools could find them. Fine for family; it can be made cheat-proof later with sign-in and stricter database rules.
 
 ## Chat and reactions
 

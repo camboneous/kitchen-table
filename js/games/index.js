@@ -20,6 +20,10 @@
 
   The same module runs pass-and-play and online games, so every game gets both for free.
 
+  Card games with private hands set hiddenHands: true. Online, each player is shown only their own
+  hand (render gets mySeat); in pass-and-play the app shows a "Pass to …" screen before each turn.
+  resultText(state, players) can replace the default "X wins" line (e.g. for teams).
+
   Everyone-at-once games (like Rare Words) set simultaneous: true and add:
     init(n, opts, round, now)       now is a shared clock time, for round timers
     collect(state, entries, now)    entries[seat] = that player's private answers ({..., done}) or null;
@@ -39,8 +43,10 @@ import checkers from './checkers.js';
 import reversi from './reversi.js';
 import mancala from './mancala.js';
 import rare from './rarewords.js';
+import euchre from './euchre.js';
+import eights from './crazyeights.js';
 
-export const GAME_LIST = [rare, dots, ttt, four, checkers, reversi, mancala];
+export const GAME_LIST = [rare, euchre, eights, dots, ttt, four, checkers, reversi, mancala];
 export const GAMES = Object.fromEntries(GAME_LIST.map(g => [g.id, g]));
 
 export function defaultOpts(game) {

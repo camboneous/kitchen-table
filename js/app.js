@@ -35,6 +35,8 @@ function optionControls(el, game, opts, onChange, readOnly) {
 
 /* ---------- home ---------- */
 const ART = {
+  euchre: `<svg viewBox="0 0 120 120">${[[-14,30,'J','♠','var(--ink)'],[0,44,'J','♣','var(--ink)'],[14,58,'A','♥','var(--c1)']].map(([rot,x,r,su,c])=>`<g transform="translate(${x} 22) rotate(${rot} 18 70)"><rect width="38" height="54" rx="5" fill="var(--card)" stroke="var(--ink)" stroke-width="2.5"/><text x="6" y="15" font-size="12" font-weight="800" fill="${c}" font-family="system-ui,sans-serif">${r}</text><text x="19" y="40" font-size="20" text-anchor="middle" fill="${c}">${su}</text></g>`).join('')}</svg>`,
+  eights: `<svg viewBox="0 0 120 120"><g transform="translate(22 30) rotate(-8 19 27)"><rect width="38" height="54" rx="5" fill="var(--c0)" stroke="var(--ink)" stroke-width="2.5"/><path d="M6 6h26v42H6z" fill="none" stroke="var(--paper)" stroke-width="1.5" opacity=".6"/></g><g transform="translate(56 26) rotate(9 19 27)"><rect width="38" height="54" rx="5" fill="var(--card)" stroke="var(--ink)" stroke-width="2.5"/><text x="19" y="38" font-size="28" font-weight="800" text-anchor="middle" fill="var(--c1)" font-family="system-ui,sans-serif">8</text><text x="6" y="14" font-size="10" fill="var(--c1)">♦</text></g><g font-size="14"><text x="20" y="104" fill="var(--ink)">♠</text><text x="42" y="104" fill="var(--c1)">♥</text><text x="64" y="104" fill="var(--ink)">♣</text><text x="86" y="104" fill="var(--c1)">♦</text></g></svg>`,
   rare: `<svg viewBox="0 0 120 120">${['R','A','R','E'].map((L,k)=>`<g transform="translate(${14+k*24} ${k%2?46:34}) rotate(${[-8,5,-4,9][k]} 11 11)"><rect width="22" height="24" rx="5" fill="var(--card)" stroke="var(--ink)" stroke-width="2.5"/><text x="11" y="17.5" text-anchor="middle" font-size="15" font-weight="800" font-family="Bricolage Grotesque,system-ui,sans-serif" fill="${['var(--c0)','var(--c1)','var(--c2)','var(--c3)'][k]}">${L}</text></g>`).join('')}<g transform="translate(38 76)">${['W','O','R','D','S'].map((L,k)=>`<g transform="translate(${k*9} 0)"><rect width="8" height="10" rx="2" fill="var(--ink)"/></g>`).join('')}</g><circle cx="98" cy="88" r="10" fill="none" stroke="var(--c3)" stroke-width="3"/><path d="M98 82v6l4 3" stroke="var(--c3)" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`,
   dots: `<svg viewBox="0 0 120 120"><rect x="20" y="20" width="40" height="40" rx="3" fill="var(--c0)" opacity=".25"/><g stroke-width="7" stroke-linecap="round"><line x1="20" y1="20" x2="60" y2="20" stroke="var(--c0)"/><line x1="60" y1="20" x2="60" y2="60" stroke="var(--c1)"/><line x1="20" y1="60" x2="60" y2="60" stroke="var(--c0)"/><line x1="20" y1="20" x2="20" y2="60" stroke="var(--c0)"/><line x1="100" y1="60" x2="100" y2="100" stroke="var(--c1)"/></g><g fill="var(--dot)"><circle cx="20" cy="20" r="6"/><circle cx="60" cy="20" r="6"/><circle cx="100" cy="20" r="6"/><circle cx="20" cy="60" r="6"/><circle cx="60" cy="60" r="6"/><circle cx="100" cy="60" r="6"/><circle cx="20" cy="100" r="6"/><circle cx="60" cy="100" r="6"/><circle cx="100" cy="100" r="6"/></g></svg>`,
   ttt: `<svg viewBox="0 0 120 120" fill="none" stroke-linecap="round"><g stroke="var(--line)" stroke-width="5"><line x1="45" y1="10" x2="45" y2="110"/><line x1="75" y1="10" x2="75" y2="110"/><line x1="10" y1="45" x2="110" y2="45"/><line x1="10" y1="75" x2="110" y2="75"/></g><g stroke="var(--c0)" stroke-width="8"><line x1="17" y1="17" x2="37" y2="37"/><line x1="37" y1="17" x2="17" y2="37"/><line x1="83" y1="83" x2="103" y2="103"/><line x1="103" y1="83" x2="83" y2="103"/></g><circle cx="60" cy="60" r="11" stroke="var(--c1)" stroke-width="8"/><circle cx="93" cy="27" r="11" stroke="var(--c1)" stroke-width="8"/></svg>`,
@@ -128,9 +130,9 @@ function drawPlay(view) {
     if (extra) status.append(h('small', {}, extra));
   }
 
-  if (game.simultaneous) {
-    if (view.handoff) view.handoff($('board'));
-    else game.render($('board'), state, { players, mySeat: view.mySeat, ...view.sim });
+  if (view.handoff) view.handoff($('board'));
+  else if (game.simultaneous) {
+    game.render($('board'), state, { players, mySeat: view.mySeat, ...view.sim });
   } else {
     const canMove = !st.over && !view.busy && (view.mySeat === -1 || view.mySeat === state.turn);
     game.render($('board'), state, { players, canMove, onMove: view.onMove, mySeat: view.mySeat });
@@ -142,7 +144,8 @@ function drawPlay(view) {
 function showOver(view, st, scores) {
   const { players } = view, res = $('result');
   res.replaceChildren();
-  if (st.draw || st.winners.length !== 1) res.textContent = st.draw || !scores ? 'It’s a draw' : `Tie at ${scores[st.winners[0]]}`;
+  if (view.game.resultText) res.textContent = view.game.resultText(view.state, players);
+  else if (st.draw || st.winners.length !== 1) res.textContent = st.draw || !scores ? 'It’s a draw' : `Tie at ${scores[st.winners[0]]}`;
   else {
     const w = st.winners[0];
     res.append(h('span', { style: `color:${col(players[w].color)}` }, view.online && view.mySeat === w ? 'You win!' : players[w].name + ' wins'));
@@ -162,7 +165,7 @@ let local = null;
 $('local-start').onclick = () => {
   const g = setup.game;
   const players = Array.from({ length: setup.n }, (_, i) => ({ name: clean(setup.names[i]) || DEFAULT_NAMES[i], color: i }));
-  local = { game: g, players, opts: { ...setup.opts }, round: 0 };
+  local = { game: g, players, opts: { ...setup.opts }, round: 0, viewer: -1 };
   local.state = g.init(players.length, local.opts, 0, Date.now());
   resetLocalSim();
   $('board').removeAttribute('data-last');
@@ -178,10 +181,24 @@ function drawLocal() {
     game: g, state: local.state, players: local.players, mySeat: -1, online: false,
     onMove: mv => { const n = g.move(local.state, mv, local.state.turn); if (n) { local.state = n; drawLocal(); } },
     actions: [
-      { label: 'Play again', fn: () => { local.round++; local.state = g.init(local.players.length, local.opts, local.round, Date.now()); if (g.simultaneous) resetLocalSim(); $('board').removeAttribute('data-last'); drawLocal(); } },
+      { label: 'Play again', fn: () => { local.round++; local.state = g.init(local.players.length, local.opts, local.round, Date.now()); if (g.simultaneous) resetLocalSim(); local.viewer = -1; $('board').removeAttribute('data-last'); drawLocal(); } },
       { label: 'Change setup', ghost: true, fn: () => { local = null; openSetup(setup.game.id); } }
     ]
   };
+  if (g.hiddenHands && !g.status(local.state).over) {
+    // Card games on one device: hand it to whoever acts next, so nobody sees another hand.
+    const st = local.state;
+    if (local.players.length > 1 && local.viewer !== st.turn) {
+      const p = local.players[st.turn];
+      view.handoff = el => el.replaceChildren(h('div', { class: 'handoff' },
+        h('div', { class: 'handoff-name', style: `color:${col(p.color)}` }, `Pass to ${p.name}`),
+        h('p', { class: 'sub' }, 'Everyone else, look away.'),
+        h('button', { class: 'btn', onclick: () => { local.viewer = st.turn; drawLocal(); } }, `I’m ${p.name}`)));
+    } else {
+      local.viewer = st.turn;
+      view.mySeat = st.turn;
+    }
+  }
   if (g.simultaneous) {
     const st = local.state;
     view.done = local.players.map((_, i) => st.phase === 'play' && i < sim.active);
@@ -334,9 +351,9 @@ function drawLobby(d, players) {
 $('lobby-start').onclick = () => net.start(room.code).then(ok => { if (!ok) toast('Couldn’t start. Make sure enough players are here.'); });
 $('lobby-share').onclick = async () => {
   const url = location.origin + location.pathname + '#' + room.code;
-  const text = `Join my game on Kitchen Table. Code: ${room.code}`;
+  const text = `Join my game on Parker Kitchen Table. Code: ${room.code}`;
   try {
-    if (navigator.share) await navigator.share({ title: 'Kitchen Table', text, url });
+    if (navigator.share) await navigator.share({ title: 'Parker Kitchen Table', text, url });
     else { await navigator.clipboard.writeText(url); toast('Link copied'); }
   } catch (e) { /* share sheet dismissed */ }
 };
@@ -359,9 +376,15 @@ function drawOnlinePlay(d, playersAll) {
     game, state, players, mySeat: mySeat >= 0 ? mySeat : -2, online: true, busy: room.busy,
     onMove: async mv => {
       if (room.busy) return;
-      room.busy = true; drawRoom();
-      try { await net.move(room.code, mv); } catch (e) { toast('That move didn’t go through. Try again.'); }
-      if (room) { room.busy = false; drawRoom(); }
+      const r = room;
+      r.busy = true; drawRoom();
+      // If a weak connection keeps the move from confirming, don't leave the player locked out.
+      const release = setTimeout(() => {
+        if (room === r && r.busy) { r.busy = false; drawRoom(); toast('Slow connection. If your move didn’t show up, try again.'); }
+      }, 10000);
+      try { await net.move(r.code, mv); } catch (e) { toast('That move didn’t go through. Try again.'); }
+      clearTimeout(release);
+      if (room === r) { r.busy = false; drawRoom(); }
     },
     actions: [
       { label: 'Play again', fn: () => net.rematch(room.code, rev) },
