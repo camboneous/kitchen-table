@@ -22,6 +22,8 @@
 
   Card games with private hands set hiddenHands: true. Online, each player is shown only their own
   hand (render gets mySeat); in pass-and-play the app shows a "Pass to …" screen before each turn.
+  canAct(state, seat) lets someone other than state.turn act (e.g. either player taps "Next hand"),
+  and isPublic(state) marks moments when nothing is hidden, so pass-and-play skips the hand-off.
   resultText(state, players) can replace the default "X wins" line (e.g. for teams).
 
   Everyone-at-once games (like Rare Words) set simultaneous: true and add:
@@ -46,8 +48,9 @@ import rare from './rarewords.js';
 import euchre from './euchre.js';
 import eights from './crazyeights.js';
 import dice from './fivedice.js';
+import cribbage from './cribbage.js';
 
-export const GAME_LIST = [rare, euchre, eights, dice, dots, ttt, four, checkers, reversi, mancala];
+export const GAME_LIST = [rare, euchre, cribbage, eights, dice, dots, ttt, four, checkers, reversi, mancala];
 export const GAMES = Object.fromEntries(GAME_LIST.map(g => [g.id, g]));
 
 export function defaultOpts(game) {

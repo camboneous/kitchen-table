@@ -2,7 +2,7 @@
 
 Party games for friends and family. Play pass-and-play on one device, or host a game and have everyone join from their own phone with a 4-letter code.
 
-Games so far: Rare Words, Euchre, Crazy Eights, Five Dice, Dots & Boxes, Tic Tac Toe (Classic and Ultimate), Four in a Row, Checkers, Reversi, Mancala.
+Games so far: Rare Words, Euchre, Cribbage, Crazy Eights, Five Dice, Dots & Boxes, Tic Tac Toe (Classic and Ultimate), Four in a Row, Checkers, Reversi, Mancala.
 
 No build step. It's plain HTML, CSS, and JavaScript modules, hosted on Netlify, with Firebase Realtime Database holding the live game rooms.
 
@@ -99,7 +99,7 @@ python3 -m http.server 8000
 
 ## Computer players
 
-In pass-and-play setup, tap **Person** on any seat to turn it into a computer player, and pick Easy, Medium, or Hard. Available in Four in a Row, Checkers, Crazy Eights, and Rare Words (which also has a solo mode). Five Dice can be played solo too.
+In pass-and-play setup, tap **Person** on any seat to turn it into a computer player, and pick Easy, Medium, or Hard. Available in Cribbage, Four in a Row, Checkers, Crazy Eights, and Rare Words (which also has a solo mode). Five Dice can be played solo too.
 
 - Four in a Row and Checkers look several moves ahead (`js/games/ai.js`). Easy makes deliberate mistakes; Hard is a real challenge.
 - Crazy Eights plays sensible habits using only its own hand: stick with its strongest suit, use eights wisely.
@@ -112,6 +112,10 @@ To add a computer player to another game, give its module a `bot` object: `pick(
 Everyone gets the same seven letters and plays at the same time. Words only you found score 3 points per letter, words two people found score 1 per letter, and words three or more people found score nothing. Using all seven letters adds 10.
 
 The dictionary is `data/words.txt`: about 51,600 English words of 3 to 7 letters, from the public-domain ENABLE word list with offensive words removed. To allow or block a word, add or delete its line. The round letters come from common 7-letter words in `js/games/rarewords-seeds.js`, so there's always at least one seven-letter answer.
+
+## Cribbage
+
+Two players, standard rules: deal 6, send 2 to the dealer's crib, cut (a jack is his heels, 2 for the dealer), peg to 31 (fifteens, pairs, runs, 31, go, last card), then count non-dealer's hand, dealer's hand, and the crib (fifteens, pairs, runs, flushes, nobs). "Go" is automatic. Play to 121 or a 61-point short game; skunks are called out. The computer opponent picks its discards by averaging every possible starter card and pegs defensively (avoids leaving 5 or 21, and on Hard weighs what you could score back).
 
 ## Five Dice
 

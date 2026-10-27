@@ -36,6 +36,7 @@ function optionControls(el, game, opts, onChange, readOnly) {
 
 /* ---------- home ---------- */
 const ART = {
+  cribbage: `<svg viewBox="0 0 120 120"><rect x="10" y="38" width="100" height="44" rx="10" fill="color-mix(in srgb,var(--c3) 45%,var(--card))" stroke="var(--ink)" stroke-width="2.5"/>${[0,1,2].map(r=>Array.from({length:10},(_,c)=>`<circle cx="${20+c*9}" cy="${50+r*10}" r="1.8" fill="var(--ink)" opacity=".55"/>`).join('')).join('')}<rect x="45" y="40" width="4" height="13" rx="2" fill="var(--c0)" transform="rotate(-8 47 47)"/><rect x="72" y="49" width="4" height="13" rx="2" fill="var(--c1)" transform="rotate(6 74 55)"/><g transform="translate(66 6) rotate(12 15 20)"><rect width="28" height="38" rx="4" fill="var(--card)" stroke="var(--ink)" stroke-width="2"/><text x="14" y="26" font-size="16" font-weight="800" text-anchor="middle" fill="var(--c1)" font-family="system-ui,sans-serif">5</text></g><g transform="translate(22 82) rotate(-10 15 20)"><rect width="28" height="38" rx="4" fill="var(--card)" stroke="var(--ink)" stroke-width="2"/><text x="14" y="26" font-size="15" font-weight="800" text-anchor="middle" fill="var(--ink)" font-family="system-ui,sans-serif">J</text></g></svg>`,
   dice: `<svg viewBox="0 0 120 120">${[[14,40,-12,[0,4,8],'var(--card)','var(--ink)'],[46,26,6,[0,2,4,6,8],'var(--c1)','var(--paper)'],[74,50,14,[0,2,6,8],'var(--card)','var(--ink)']].map(([x,y,r,on,bg,pc])=>`<g transform="translate(${x} ${y}) rotate(${r} 17 17)"><rect width="34" height="34" rx="7" fill="${bg}" stroke="var(--ink)" stroke-width="2.5"/>${on.map(k=>`<circle cx="${8+(k%3)*9}" cy="${8+Math.floor(k/3)*9}" r="3" fill="${pc}"/>`).join('')}</g>`).join('')}</svg>`,
   euchre: `<svg viewBox="0 0 120 120">${[[-14,30,'J','♠','var(--ink)'],[0,44,'J','♣','var(--ink)'],[14,58,'A','♥','var(--c1)']].map(([rot,x,r,su,c])=>`<g transform="translate(${x} 22) rotate(${rot} 18 70)"><rect width="38" height="54" rx="5" fill="var(--card)" stroke="var(--ink)" stroke-width="2.5"/><text x="6" y="15" font-size="12" font-weight="800" fill="${c}" font-family="system-ui,sans-serif">${r}</text><text x="19" y="40" font-size="20" text-anchor="middle" fill="${c}">${su}</text></g>`).join('')}</svg>`,
   eights: `<svg viewBox="0 0 120 120"><g transform="translate(22 30) rotate(-8 19 27)"><rect width="38" height="54" rx="5" fill="var(--c0)" stroke="var(--ink)" stroke-width="2.5"/><path d="M6 6h26v42H6z" fill="none" stroke="var(--paper)" stroke-width="1.5" opacity=".6"/></g><g transform="translate(56 26) rotate(9 19 27)"><rect width="38" height="54" rx="5" fill="var(--card)" stroke="var(--ink)" stroke-width="2.5"/><text x="19" y="38" font-size="28" font-weight="800" text-anchor="middle" fill="var(--c1)" font-family="system-ui,sans-serif">8</text><text x="6" y="14" font-size="10" fill="var(--c1)">♦</text></g><g font-size="14"><text x="20" y="104" fill="var(--ink)">♠</text><text x="42" y="104" fill="var(--c1)">♥</text><text x="64" y="104" fill="var(--ink)">♣</text><text x="86" y="104" fill="var(--c1)">♦</text></g></svg>`,
@@ -138,7 +139,9 @@ function drawPlay(view) {
 
   const status = $('status'); status.replaceChildren();
   status.hidden = !!game.simultaneous;
-  if (!st.over && !game.simultaneous) {
+  if (!st.over && !game.simultaneous && game.isPublic && game.isPublic(state)) {
+    status.append(h('span', {}, game.note ? game.note(state) : ''));
+  } else if (!st.over && !game.simultaneous) {
     const cur = players[state.turn];
     let text = cur.name + '’s turn';
     if (view.online && view.mySeat === state.turn) text = 'Your turn';
@@ -155,7 +158,8 @@ function drawPlay(view) {
   else if (game.simultaneous) {
     game.render($('board'), state, { players, mySeat: view.mySeat, ...view.sim });
   } else {
-    const canMove = !st.over && !view.busy && !view.lock && (view.mySeat === -1 || view.mySeat === state.turn);
+    const acts = seat => game.canAct ? game.canAct(state, seat) : seat === state.turn;
+    const canMove = !st.over && !view.busy && !view.lock && (view.mySeat === -1 || acts(view.mySeat));
     game.render($('board'), state, { players, canMove, onMove: view.onMove, mySeat: view.mySeat });
   }
 
@@ -214,12 +218,16 @@ function drawLocal() {
     view.soloHuman = humans[0];
     if (!g.simultaneous) view.mySeat = humans[0]; // e.g. flips the checkers board to your side
   }
-  const botTurn = !g.simultaneous && !g.status(local.state).over && !!local.players[local.state.turn].bot;
+  const humanCanAct = !!g.canAct && humans.some(i => g.canAct(local.state, i));
+  const botTurn = !g.simultaneous && !g.status(local.state).over && !!local.players[local.state.turn].bot && !humanCanAct;
+  const isPublic = !!(g.isPublic && g.isPublic(local.state));
   if (botTurn) view.lock = true;
   if (g.hiddenHands && !g.status(local.state).over && humans.length === 1) {
     // One person against the computer: always show their hand, never a hand-off screen.
     view.mySeat = humans[0];
     if (botTurn) view.lock = true;
+  } else if (g.hiddenHands && !g.status(local.state).over && isPublic) {
+    view.mySeat = local.viewer >= 0 ? local.viewer : local.state.turn; // everything is face up: no hand-off needed
   } else if (g.hiddenHands && !g.status(local.state).over && botTurn) {
     view.mySeat = -2; // several people sharing the device: hide every hand while the computer plays
   } else if (g.hiddenHands && !g.status(local.state).over) {
