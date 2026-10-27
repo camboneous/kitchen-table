@@ -99,6 +99,8 @@ input[type=text]:focus{outline:none;border-color:var(--ink)}
 .seg.modes{margin-top:16px}
 .seg.modes button{padding:12px;font-size:1.05rem}
 .pl-row{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+.bot-toggle{flex:none;border:2px solid var(--line);background:var(--paper);border-radius:10px;padding:10px 10px;font-weight:700;font-size:.9rem;cursor:pointer;white-space:nowrap}
+.bot-toggle[aria-pressed=true]{border-color:var(--ink);background:var(--ink);color:var(--paper)}
 .sw{width:16px;height:16px;border-radius:50%;flex:none}
 
 /* banners and toast */
@@ -290,6 +292,10 @@ input[type=text]:focus{outline:none;border-color:var(--ink)}
 .rw-w{font-weight:800;letter-spacing:.06em}
 .rw-by{display:flex;flex-wrap:wrap;gap:4px 8px;font-size:.9rem;font-weight:600;min-width:0}
 .rw-pts{font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.rw-missed{background:var(--card);border:2px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:6px}
+.rw-missed-head{font-weight:700}
+.rw-best{text-align:center;font-weight:800;font-size:1.1rem}
+.rw-best.new{color:var(--c2)}
 .rw-seed b{color:var(--ink);letter-spacing:.06em}
 
 /* card kit */

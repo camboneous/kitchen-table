@@ -15,6 +15,42 @@ function refill(s) {
   return { ...s, stock: shuffle(s.pile.slice(0, -1)), pile: [top] };
 }
 
+// Computer opponent. It only looks at its own hand and the table, like a person would.
+function botPick(s, seat, level) {
+  const hand = s.hands[seat];
+  const playable = hand.filter(c => canPlay(s, c));
+  const count = su => hand.filter(c => suitOf(c) === su && rankOf(c) !== '8').length;
+  const bestSuit = () => SUITS.slice().sort((a, b) => count(b) - count(a))[0];
+  const stuck = !refill(s).stock.length;
+  if (level === 'easy') {
+    if (playable.length && Math.random() < 0.85) {
+      const c = playable[Math.floor(Math.random() * playable.length)];
+      return rankOf(c) === '8' ? { t: 'play', c, s: SUITS[Math.floor(Math.random() * 4)] } : { t: 'play', c };
+    }
+    return !s.drew && !stuck ? { t: 'draw' } : playable.length ? { t: 'play', c: playable[0], s: bestSuit() } : { t: 'pass' };
+  }
+  const nonEights = playable.filter(c => rankOf(c) !== '8');
+  const nextCount = s.hands[(seat + 1) % s.n].length;
+  if (nonEights.length) {
+    // Prefer the play that leaves us strongest: stay in (or switch to) the suit we hold most of.
+    const scored = nonEights.map(c => {
+      let v = count(suitOf(c)) * 3 + (FULL_RANKS.indexOf(rankOf(c)) / 13); // dump high cards a little sooner
+      if (level === 'hard' && nextCount <= 2 && suitOf(c) !== s.suit) v += 4; // change suit on a player about to go out
+      return { c, v };
+    }).sort((a, b) => b.v - a.v);
+    return { t: 'play', c: scored[0].c };
+  }
+  const eight = playable.find(c => rankOf(c) === '8');
+  if (eight) {
+    // Name the suit we hold most of. Hard also avoids the suit the next player just failed to follow.
+    let suit = bestSuit();
+    if (level === 'hard' && s.last && s.last.t === 'draw' && s.last.seat === (seat + 1) % s.n && count(s.suit) > 0) suit = s.suit;
+    return { t: 'play', c: eight, s: suit };
+  }
+  if (!s.drew && !stuck) return { t: 'draw' };
+  return { t: 'pass' };
+}
+
 let pick8 = null; // { key, card } an 8 waiting for its suit
 
 export default {
@@ -65,6 +101,8 @@ export default {
   },
 
   status(s) { return s.winner >= 0 ? { over: true, winners: [s.winner] } : { over: false }; },
+  bot: { pick: (s, seat, level) => botPick(s, seat, level) },
+
   note(s) { return s.drew ? 'Drew a card: play one or pass' : ''; },
 
   render(el, s, ctx) {

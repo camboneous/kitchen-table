@@ -97,6 +97,16 @@ python3 -m http.server 8000
 # then open http://localhost:8000
 ```
 
+## Computer players
+
+In pass-and-play setup, tap **Person** on any seat to turn it into a computer player, and pick Easy, Medium, or Hard. Available in Four in a Row, Checkers, Crazy Eights, and Rare Words (which also has a solo mode). Five Dice can be played solo too.
+
+- Four in a Row and Checkers look several moves ahead (`js/games/ai.js`). Easy makes deliberate mistakes; Hard is a real challenge.
+- Crazy Eights plays sensible habits using only its own hand: stick with its strongest suit, use eights wisely.
+- Rare Words computer players find roughly 8 (Easy), 16 (Medium), or 28 (Hard) words per 90-second round, from mostly common words up to long obscure ones, using `data/common.txt` to tell common words from rare ones.
+
+To add a computer player to another game, give its module a `bot` object: `pick(state, seat, level, game)` returns a move (turn-based games), or `entry(state, level)` returns answers (everyone-at-once games).
+
 ## Rare Words
 
 Everyone gets the same seven letters and plays at the same time. Words only you found score 3 points per letter, words two people found score 1 per letter, and words three or more people found score nothing. Using all seven letters adds 10.

@@ -8,15 +8,23 @@ import SEEDS from './rarewords-seeds.js';
 
 const LEAD_MS = 3000; // "get ready" countdown before each turn
 
-let dict = null, dictPromise = null;
-function loadDict() {
+let dict = null, common = null, dictPromise = null;
+const fetchText = path => fetch(new URL(path, import.meta.url)).then(r => { if (!r.ok) throw new Error(path); return r.text(); });
+export function loadDict() {
   if (!dictPromise) {
-    dictPromise = fetch(new URL('../../data/words.txt', import.meta.url))
-      .then(r => { if (!r.ok) throw new Error('dict'); return r.text(); })
-      .then(t => (dict = new Set(t.split('\n'))))
+    dictPromise = Promise.all([fetchText('../../data/words.txt'), fetchText('../../data/common.txt')])
+      .then(([w, c]) => { dict = new Set(w.split('\n')); common = new Set(c.split('\n')); return dict; })
       .catch(e => { dictPromise = null; throw e; });
   }
   return dictPromise;
+}
+const isCommon = w => !!common && common.has(w.toLowerCase());
+// Every dictionary word these letters can make, longest first.
+function allWords(letters) {
+  if (!dict) return null;
+  const out = [];
+  for (const w of dict) if (w.length >= 3 && fits(w.toUpperCase(), letters)) out.push(w.toUpperCase());
+  return out.sort((a, b) => b.length - a.length || a.localeCompare(b));
 }
 
 function fits(word, letters) {
@@ -53,7 +61,7 @@ export default {
   id: 'rare',
   name: 'Rare Words',
   blurb: 'Everyone gets the same seven letters. Find words nobody else thinks of: rare words score big, common ones score nothing.',
-  min: 2, max: 6,
+  min: 1, max: 6,
   simultaneous: true,
   options: [
     { key: 'secs', label: 'Time per round', def: 90, choices: [60, 90, 120].map(v => ({ label: v === 60 ? '1 min' : v === 90 ? '1½ min' : '2 min', value: v })) },
@@ -100,6 +108,29 @@ export default {
   },
 
   scores(s) { return s.totals; },
+
+  // Computer players in Rare Words don't take turns; they just find a share of the words.
+  // Easy finds mostly short, common words; Hard also digs up long and obscure ones.
+  bot: {
+    entry(s, level) {
+      const words = allWords(s.letters) || [];
+      // About how many words a person at this level finds in 90 seconds, scaled to the round length.
+      const cfg = {
+        easy: { count: 8, maxLen: 5, weight: w => (w.length <= 4 ? 2 : 0.6) * (isCommon(w) ? 5 : 0.3) },
+        medium: { count: 16, maxLen: 6, weight: w => (isCommon(w) ? 4 : 0.8) },
+        hard: { count: 28, maxLen: 7, weight: w => (w.length >= 5 ? 2 : 1) * (isCommon(w) ? 3 : 1.2) }
+      }[level];
+      let target = Math.round(cfg.count * (s.secs / 90) * (0.8 + Math.random() * 0.4));
+      const pool = words.filter(w => w.length <= cfg.maxLen).map(w => ({ w, k: Math.pow(Math.random(), 1 / cfg.weight(w)) }));
+      pool.sort((a, b) => b.k - a.k); // weighted pick without repeats
+      return { words: pool.slice(0, target).map(x => x.w), done: true };
+    }
+  },
+  resultText(s, players) {
+    if (s.n === 1) return `Final score: ${s.totals[0]}`;
+    const max = Math.max(...s.totals), w = s.totals.map((t, i) => t === max ? i : -1).filter(i => i >= 0);
+    return w.length > 1 ? `Tie at ${max}` : `${players[w[0]].name} wins with ${max}`;
+  },
   roundLabel(s) { return `Round ${s.round} of ${s.rounds}`; },
   turnMs(s) { return LEAD_MS + s.secs * 1000; },
 
@@ -248,6 +279,8 @@ function renderReveal(el, s, ctx, key) {
   const gains = h('div', { class: 'rw-gains' }, ...order.map(i => h('span', { class: 'rw-gain', style: `--c:${col(players[i].color)}` },
     h('span', { class: 'sw', style: `background:${col(players[i].color)}` }), players[i].name, h('b', {}, `+${r.gained[i]}`))));
 
+  const last = s.round >= s.rounds;
+  if (!dict) loadDict().then(() => { if (el._rw === c) renderReveal(el, s, ctx, key); }).catch(() => {});
   const rows = r.words.map((x, k) => {
     const label = x.by.length === 1 ? `+${x.pts}` : x.by.length === 2 ? `+${x.pts} each` : (x.w.length === 7 ? `+${x.pts} each` : 'too common');
     const li = h('li', { class: 'rw-row' + (x.by.length === 1 ? ' solo' : '') + (x.pts === 0 ? ' zero' : '') },
@@ -257,7 +290,6 @@ function renderReveal(el, s, ctx, key) {
     li.style.animationDelay = `${Math.min(k * 70, 2000)}ms`;
     return li;
   });
-  const last = s.round >= s.rounds;
   const canAdvance = ctx.local || ctx.mySeat >= 0;
   const nextBtn = h('button', {
     class: 'btn wide', disabled: !canAdvance,
@@ -269,10 +301,38 @@ function renderReveal(el, s, ctx, key) {
     h('p', { class: 'rw-letters' }, ...s.letters.split('').map(L => h('span', {}, L))),
     gains,
     r.words.length ? h('ul', { class: 'rw-words' }, ...rows) : h('p', { class: 'sub' }, 'Nobody found any words this round.'),
-    !r.seedFound ? h('p', { class: 'small rw-seed' }, 'Nobody found the seven-letter word: ', h('b', {}, s.seed)) : null,
+    missedBox(s, r, ctx),
+    !r.seedFound ? h('p', { class: 'small rw-seed' }, s.n === 1 ? 'The seven-letter word was ' : 'Nobody found the seven-letter word: ', h('b', {}, s.seed)) : null,
+    s.n === 1 && last ? bestBox(s) : null,
     h('p', { class: 'small' }, 'Only you found it: 3 points a letter. Two of you: 1 a letter. Three or more: nothing. Using all seven letters adds 10.'),
     nextBtn);
   c.root = root;
   c.refresh = () => {};
   el.replaceChildren(root);
+}
+
+// Words nobody found this round (the solo player sees how many they missed).
+function missedBox(s, r, ctx) {
+  const all = allWords(s.letters);
+  if (!all) return null;
+  const found = new Set(r.words.map(x => x.w));
+  const missed = all.filter(w => !found.has(w));
+  const head = s.n === 1 ? `You found ${found.size} of ${all.length} possible words.` : `Together you found ${found.size} of ${all.length} possible words.`;
+  return h('div', { class: 'rw-missed' },
+    h('p', { class: 'rw-missed-head' }, head),
+    missed.length ? h('p', { class: 'small' }, 'Some you missed:') : null,
+    missed.length ? h('div', { class: 'rw-list' }, ...missed.slice(0, 18).map(w => h('span', { class: 'rw-chip' + (w.length === 7 ? ' seven' : '') }, w))) : null);
+}
+// Solo personal best, kept on this device for each time and round setting.
+const bestResults = {};
+function bestBox(s) {
+  const key = `rw-best-${s.secs}-${s.rounds}`, total = s.totals[0], id = s.used.join(',');
+  let best = 0;
+  try { best = +(localStorage.getItem(key) || 0); } catch (e) {}
+  if (!(id in bestResults)) {
+    bestResults[id] = total > best;
+    if (total > best) { try { localStorage.setItem(key, String(total)); } catch (e) {} best = total; }
+  }
+  const isNew = bestResults[id];
+  return h('p', { class: 'rw-best' + (isNew ? ' new' : '') }, isNew ? `New personal best: ${total}!` : `Your best at this setting: ${Math.max(best, total)}`);
 }

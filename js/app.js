@@ -1,5 +1,6 @@
 import { GAMES, GAME_LIST, defaultOpts, optsFor } from './games/index.js';
 import { h, col } from './games/util.js';
+import { LEVELS } from './games/ai.js';
 import * as net from './net.js';
 import * as chat from './chat.js';
 
@@ -70,7 +71,7 @@ $('home-join').onclick = () => openJoin('');
 document.querySelectorAll('[data-home]').forEach(b => b.onclick = () => { drawHome(); show('home'); });
 
 /* ---------- setup (pass-and-play or host) ---------- */
-const setup = { game: null, mode: 0, n: 2, names: ['', '', '', '', '', ''], opts: {} };
+const setup = { game: null, mode: 0, n: 2, names: ['', '', '', '', '', ''], bots: [false, false, false, false, false, false], level: 'medium', opts: {} };
 const DEFAULT_NAMES = ['Player 1', 'Player 2', 'Player 3', 'Player 4', 'Player 5', 'Player 6'];
 
 function openSetup(id) {
@@ -91,13 +92,30 @@ function drawSetup() {
   $('local-count').parentElement.querySelector('label').hidden = counts.length < 2;
   $('local-count').hidden = counts.length < 2;
   seg($('local-count'), counts.map(n => n === 1 ? 'Just me' : `${n} players`), counts.indexOf(setup.n), i => { setup.n = counts[i]; drawSetup(); });
+  const canBot = !!g.bot;
+  const anyBot = canBot && setup.bots.slice(0, setup.n).some(Boolean);
   $('local-names').replaceChildren(...Array.from({ length: setup.n }, (_, i) => {
-    const inp = h('input', { type: 'text', maxlength: 14, placeholder: DEFAULT_NAMES[i], 'aria-label': `Player ${i + 1} name` });
+    const isBot = canBot && setup.bots[i];
+    const inp = h('input', { type: 'text', maxlength: 14, placeholder: isBot ? botName(i) : DEFAULT_NAMES[i], 'aria-label': `Player ${i + 1} name` });
     inp.value = setup.names[i];
     inp.oninput = () => { setup.names[i] = inp.value; };
-    return h('div', { class: 'pl-row' }, h('span', { class: 'sw', style: `background:${col(i)}` }), inp);
+    const toggle = canBot ? h('button', {
+      type: 'button', class: 'bot-toggle', 'aria-pressed': isBot ? 'true' : 'false', title: 'Make this a computer player',
+      onclick: () => { setup.bots[i] = !setup.bots[i]; setup.names[i] = ''; drawSetup(); }
+    }, isBot ? '🤖 Computer' : 'Person') : null;
+    return h('div', { class: 'pl-row' }, h('span', { class: 'sw', style: `background:${col(i)}` }), inp, toggle);
   }));
+  $('local-level').hidden = !anyBot;
+  if (anyBot) seg($('local-level-seg'), LEVELS.map(l => l.label), LEVELS.findIndex(l => l.value === setup.level), k => { setup.level = LEVELS[k].value; drawSetup(); });
+  $('local-bot-hint').hidden = !canBot || anyBot;
+  const allBots = canBot && setup.bots.slice(0, setup.n).every(Boolean);
+  $('local-start').disabled = allBots;
+  $('local-start').textContent = allBots ? 'At least one person has to play' : 'Start game';
   optionControls($('local-opts'), g, setup.opts, o => { setup.opts = o; drawSetup(); });
+}
+function botName(i) {
+  const before = setup.bots.slice(0, i).filter(Boolean).length;
+  return before ? `Computer ${before + 1}` : 'Computer';
 }
 
 /* ---------- shared play view ---------- */
@@ -124,10 +142,12 @@ function drawPlay(view) {
     const cur = players[state.turn];
     let text = cur.name + '’s turn';
     if (view.online && view.mySeat === state.turn) text = 'Your turn';
+    if (!view.online && view.soloHuman === state.turn) text = 'Your turn';
     status.append(h('span', { style: `color:${col(cur.color)}` }, text));
     let extra = game.note ? game.note(state) : '';
     if (view.online && cur.away && view.mySeat !== state.turn) extra = 'Waiting for them to come back';
     if (view.mySeat === -2) extra = 'You’re watching';
+    if (view.lock) extra = 'Thinking…';
     if (extra) status.append(h('small', {}, extra));
   }
 
@@ -135,7 +155,7 @@ function drawPlay(view) {
   else if (game.simultaneous) {
     game.render($('board'), state, { players, mySeat: view.mySeat, ...view.sim });
   } else {
-    const canMove = !st.over && !view.busy && (view.mySeat === -1 || view.mySeat === state.turn);
+    const canMove = !st.over && !view.busy && !view.lock && (view.mySeat === -1 || view.mySeat === state.turn);
     game.render($('board'), state, { players, canMove, onMove: view.onMove, mySeat: view.mySeat });
   }
 
@@ -165,13 +185,16 @@ function showOver(view, st, scores) {
 let local = null;
 $('local-start').onclick = () => {
   const g = setup.game;
-  const players = Array.from({ length: setup.n }, (_, i) => ({ name: clean(setup.names[i]) || DEFAULT_NAMES[i], color: i }));
+  const players = Array.from({ length: setup.n }, (_, i) => {
+    const bot = g.bot && setup.bots[i] ? setup.level : null;
+    return { name: clean(setup.names[i]) || (bot ? botName(i) : DEFAULT_NAMES[i]), color: i, bot };
+  });
   local = { game: g, players, opts: { ...setup.opts }, round: 0, viewer: -1 };
   local.state = g.init(players.length, local.opts, 0, Date.now());
   resetLocalSim();
   $('board').removeAttribute('data-last');
   $('play-tag').textContent = g.name;
-  $('play-leave').onclick = () => { local = null; drawHome(); show('home'); };
+  $('play-leave').onclick = () => { if (local) clearTimeout(local.botTimer); local = null; drawHome(); show('home'); };
   show('play'); drawLocal();
 };
 // Everyone-at-once games on one device: each player gets a private turn, then everyone sees the reveal.
@@ -186,7 +209,20 @@ function drawLocal() {
       { label: 'Change setup', ghost: true, fn: () => { local = null; openSetup(setup.game.id); } }
     ]
   };
-  if (g.hiddenHands && !g.status(local.state).over) {
+  const humans = local.players.map((p, i) => p.bot ? -1 : i).filter(i => i >= 0);
+  if (humans.length === 1 && local.players.length > 1) {
+    view.soloHuman = humans[0];
+    if (!g.simultaneous) view.mySeat = humans[0]; // e.g. flips the checkers board to your side
+  }
+  const botTurn = !g.simultaneous && !g.status(local.state).over && !!local.players[local.state.turn].bot;
+  if (botTurn) view.lock = true;
+  if (g.hiddenHands && !g.status(local.state).over && humans.length === 1) {
+    // One person against the computer: always show their hand, never a hand-off screen.
+    view.mySeat = humans[0];
+    if (botTurn) view.lock = true;
+  } else if (g.hiddenHands && !g.status(local.state).over && botTurn) {
+    view.mySeat = -2; // several people sharing the device: hide every hand while the computer plays
+  } else if (g.hiddenHands && !g.status(local.state).over) {
     // Card games on one device: hand it to whoever acts next, so nobody sees another hand.
     const st = local.state;
     if (local.players.length > 1 && local.viewer !== st.turn) {
@@ -202,26 +238,30 @@ function drawLocal() {
   }
   if (g.simultaneous) {
     const st = local.state;
-    view.done = local.players.map((_, i) => st.phase === 'play' && i < sim.active);
+    // People take private turns one after another; computer players fill in their answers at the end.
+    const seatNow = humans[sim.active];
+    view.done = local.players.map((p, i) => st.phase === 'play' && (!!p.bot || humans.indexOf(i) < sim.active));
     if (st.phase === 'play' && sim.endsAt == null) {
-      const p = local.players[sim.active];
+      const p = local.players[seatNow];
+      const alone = humans.length === 1;
       view.handoff = el => el.replaceChildren(h('div', { class: 'handoff' },
         h('p', { class: 'sub' }, g.roundLabel ? g.roundLabel(st) : ''),
-        h('div', { class: 'handoff-name', style: `color:${col(p.color)}` }, `Pass to ${p.name}`),
-        h('p', { class: 'sub' }, local.players.length > 1 ? 'Everyone else, no peeking.' : ''),
+        h('div', { class: 'handoff-name', style: `color:${col(p.color)}` }, alone ? `Ready, ${p.name}?` : `Pass to ${p.name}`),
+        h('p', { class: 'sub' }, alone ? (local.players.length > 1 ? 'The computer players are ready when you are.' : '') : 'Everyone else, no peeking.'),
         h('button', { class: 'btn', onclick: () => { sim.endsAt = Date.now() + g.turnMs(st); drawLocal(); } }, 'I’m ready')));
     } else {
       const token = sim.token;
-      view.mySeat = st.phase === 'play' ? sim.active : -1;
+      view.mySeat = st.phase === 'play' ? seatNow : -1;
       view.sim = {
         local: true, now: () => Date.now(), endsAt: sim.endsAt,
-        myEntry: sim.entries[sim.active] || null,
-        setEntry: e => { if (sim.token === token) sim.entries[sim.active] = e; },
+        myEntry: sim.entries[seatNow] || null,
+        setEntry: e => { if (sim.token === token) sim.entries[seatNow] = e; },
         finishRound: () => {
           if (sim.token !== token || local.state.phase !== 'play') return;
           sim.token++; sim.active++; sim.endsAt = null;
-          if (sim.active >= local.players.length) {
-            local.state = g.collect(local.state, local.players.map((_, i) => sim.entries[i] || null), Date.now());
+          if (sim.active >= humans.length) {
+            const entries = local.players.map((p, i) => p.bot ? g.bot.entry(local.state, p.bot) : (sim.entries[i] || null));
+            local.state = g.collect(local.state, entries, Date.now());
             resetLocalSim();
           }
           drawLocal();
@@ -231,6 +271,22 @@ function drawLocal() {
     }
   }
   drawPlay(view);
+  if (botTurn) scheduleBot();
+}
+
+// Let the computer take its turn after a short pause, so it feels like someone thinking.
+function scheduleBot() {
+  const L = local, token = (L.botToken = (L.botToken || 0) + 1);
+  clearTimeout(L.botTimer);
+  L.botTimer = setTimeout(() => {
+    if (local !== L || L.botToken !== token) return;
+    const g = L.game, st = L.state, seat = st.turn, level = L.players[seat].bot;
+    if (!level || g.status(st).over) return;
+    let next = null;
+    try { const mv = g.bot.pick(st, seat, level, g); next = mv != null ? g.move(st, mv, seat) : null; } catch (e) { console.error(e); }
+    if (next) { L.state = next; drawLocal(); }
+    else console.warn('Computer player could not find a move');
+  }, 650 + Math.random() * 500);
 }
 
 /* ---------- online: host and join ---------- */

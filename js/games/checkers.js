@@ -1,4 +1,5 @@
 import { h, col, setAt } from './util.js';
+import { bestMove } from './ai.js';
 
 // Board: 64 chars. '.' empty, 'a' seat 0 piece, 'A' seat 0 king, 'b' seat 1 piece, 'B' seat 1 king.
 // Seat 0 starts at the bottom (rows 5-7) and moves up.
@@ -50,6 +51,23 @@ function legal(s) {
 }
 const CROWN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17 3 7l5 4 4-6 4 6 5-4-1 10z" fill="currentColor"/></svg>';
 
+// Computer opponent: material first, then kings, advancement, and guarding the back row.
+function evaluate(s, seat) {
+  let score = 0;
+  for (let i = 0; i < 64; i++) {
+    const p = s.b[i]; if (p === '.') continue;
+    const owner = OWN[0].includes(p) ? 0 : 1, sign = owner === seat ? 1 : -1;
+    const r = i >> 3, c = i & 7;
+    let v = p === p.toUpperCase() ? 175 : 100;
+    if (p === 'a') v += (7 - r) * 3 + (r === 7 ? 8 : 0);
+    if (p === 'b') v += r * 3 + (r === 0 ? 8 : 0);
+    if (c >= 2 && c <= 5 && r >= 2 && r <= 5) v += 4; // center control
+    score += sign * v;
+  }
+  return score;
+}
+const moveList = s => legal(s).map(m => m.from * 64 + m.to);
+
 let sel = null; // { key, from } selected piece, kept between renders
 
 export default {
@@ -88,6 +106,13 @@ export default {
     if (!legal(s).length) return { over: true, winners: [1 - s.turn] };
     if (s.quiet >= DRAW_PLIES) return { over: true, winners: [], draw: true };
     return { over: false };
+  },
+
+  bot: {
+    pick(s, seat, level, game) {
+      const cfg = { easy: { depth: 2, blunder: 0.25, noise: 60 }, medium: { depth: 4, noise: 15 }, hard: { depth: 6 } }[level];
+      return bestMove(game, s, seat, { ...cfg, moves: moveList, evaluate });
+    }
   },
 
   scores(s) { return [0, 1].map(seat => [...s.b].filter(ch => OWN[seat].includes(ch)).length); },
